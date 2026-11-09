@@ -1,0 +1,14 @@
+.agents/
+.git/
+.clasp.json
+.clasp.json.example
+.claspignore
+Code.gs
+appsscript.json
+push-code.bat
+push-code.sh
+push-gas.js
+test-runner.js
+test-suite.js
+AGENTS.md
+README.md
