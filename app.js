@@ -646,10 +646,13 @@ function runBuiltInSelfTest() {
  * FRONTEND UI CONTROLLER (Browser Only)
  * ============================================================================
  */
+const DEFAULT_GAS_WEB_APP_URL =
+  'https://script.google.com/macros/s/AKfycbwpbOfroOz1qQv2FVaiH3z6s7Z31lym86oY3TP6rn3ZjpbrPrWdxhIFk9vygIAMJzA_/exec';
+
 const AppState = {
   tasks: [],
   config: {
-    gasWebAppUrl: '',
+    gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL,
     telegramBotToken: '',
     telegramChatId: '',
     morningAlertTime: '07:30'
@@ -682,7 +685,12 @@ function loadStateFromStorage() {
   try {
     const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
     if (savedConfig) {
-      AppState.config = { ...AppState.config, ...JSON.parse(savedConfig) };
+      const parsedConfig = JSON.parse(savedConfig);
+      AppState.config = {
+        ...AppState.config,
+        ...parsedConfig,
+        gasWebAppUrl: parsedConfig.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL
+      };
     }
 
     const savedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
@@ -2265,6 +2273,23 @@ function initApp() {
   }
 
   renderAll();
+
+  // Auto-sync silently with Google Sheets in the background if connected
+  if (AppState.config.gasWebAppUrl) {
+    fetch(`${AppState.config.gasWebAppUrl}?action=getAll&t=${Date.now()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
+          AppState.tasks = data.tasks.map((t) => ({
+            ...t,
+            remainingDays: calculateRemainingDays(t.dueDate)
+          }));
+          saveTasksToStorage();
+          renderAll();
+        }
+      })
+      .catch((err) => console.warn('Background initial sync note:', err));
+  }
 }
 
 if (isBrowserEnv()) {
