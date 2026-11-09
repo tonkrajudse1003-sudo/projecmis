@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ICT Task & Project Manager | สพม.พัทลุง</title>
+
+  <!-- Google Fonts: Prompt (Headings/UI) & Sarabun (Body/Table) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Prompt', 'sans-serif'],
+            sans: ['Sarabun', 'Prompt', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SweetAlert2 via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      font-family: 'Sarabun', 'Prompt', sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6, button, select, .font-ui {
+      font-family: 'Prompt', sans-serif;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col pb-20 md:pb-10">
+
+  <!-- ===================================================================== -->
+  <!-- TOP NAVIGATION BAR -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <i data-lucide="cpu" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              ICT Task & Project Manager | สพม.พัทลุง
+            </h1>
+            <span id="connectionStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+              กำลังตรวจสอบสถานะ...
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">
+            ระบบบริหารจัดการโครงการและภารกิจงานประจำตัว • นักวิชาการคอมพิวเตอร์ สพม.พัทลุง
+          </p>
+        </div>
+      </div>
+
+      <!-- Top Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          onclick="openSelfTestModalAndRun()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition"
+          title="รันชุดทดสอบความพร้อมของระบบอัตโนมัติ (Pre-Flight Diagnostic)"
+        >
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>ตรวจสอบระบบ (Run Self-Test)</span>
+        </button>
+
+        <button
+          onclick="handleTestTelegramAlert()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition"
+          title="ดูตัวอย่างหรือทดสอบยิงแจ้งเตือนเข้า Telegram"
+        >
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">ทดสอบส่ง Telegram</span>
+        </button>
+
+        <button
+          onclick="syncWithGasBackend()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition"
+          title="ซิงค์ข้อมูลกับ Google Sheets"
+        >
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">ซิงค์ข้อมูล (Sync)</span>
+        </button>
+
+        <button
+          onclick="openSettingsModal()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition"
+          title="ตั้งค่า Google Apps Script URL และ Telegram Bot"
+        >
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span class="hidden lg:inline">ตั้งค่าระบบ</span>
+        </button>
+
+        <button
+          onclick="openAddTaskModal()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm shadow-indigo-200 transition"
+        >
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>+ เพิ่มงานใหม่</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN DASHBOARD CONTENT -->
+  <!-- ===================================================================== -->
+  <main class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1">
+
+    <!-- 1. FOUR INTERACTIVE KPI SUMMARY CARDS -->
+    <section aria-label="KPI Summary Cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Card 1: Total Tasks -->
+      <div
+        id="kpiCardAll"
+        onclick="setKpiFilter('ALL')"
+        class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition flex items-center justify-between"
+      >
+        <div>
+          <p class="text-xs font-medium text-slate-500 font-ui">งานทั้งหมด (Total Tasks)</p>
+          <h2 id="kpiTotalCount" class="text-3xl font-bold text-slate-900 mt-1">0</h2>
+          <p class="text-[11px] text-indigo-600 font-medium mt-1">คลิกเพื่อดูภารกิจทั้งหมด</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <i data-lucide="layers" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 2: Urgent & Due <= 3 Days -->
+      <div
+        id="kpiCardUrgent"
+        onclick="setKpiFilter('URGENT')"
+        class="cursor-pointer bg-white rounded-2xl p-4 border border-amber-200 shadow-sm hover:shadow-md transition flex items-center justify-between"
+      >
+        <div>
+          <p class="text-xs font-medium text-amber-700 font-ui">งานที่ต้องเร่งทำ (ด่วนที่สุด / &le; 3 วัน)</p>
+          <h2 id="kpiUrgentCount" class="text-3xl font-bold text-amber-600 mt-1">0</h2>
+          <p class="text-[11px] text-amber-700 font-medium mt-1">คลิกเพื่อกรองงานเร่งด่วน</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <i data-lucide="flame" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 3: In Progress -->
+      <div
+        id="kpiCardInProgress"
+        onclick="setKpiFilter('IN_PROGRESS')"
+        class="cursor-pointer bg-white rounded-2xl p-4 border border-indigo-200 shadow-sm hover:shadow-md transition flex items-center justify-between"
+      >
+        <div>
+          <p class="text-xs font-medium text-indigo-700 font-ui">กำลังดำเนินการ (In Progress)</p>
+          <h2 id="kpiInProgressCount" class="text-3xl font-bold text-indigo-600 mt-1">0</h2>
+          <p class="text-[11px] text-indigo-600 font-medium mt-1">คลิกเพื่อดูงานที่กำลังทำ</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <i data-lucide="activity" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 4: Overdue / Failed Deadline -->
+      <div
+        id="kpiCardOverdue"
+        onclick="setKpiFilter('OVERDUE')"
+        class="cursor-pointer bg-white rounded-2xl p-4 border border-rose-200 shadow-sm hover:shadow-md transition flex items-center justify-between"
+      >
+        <div>
+          <p class="text-xs font-medium text-rose-700 font-ui">งานคงค้าง / เลยกำหนด (Overdue)</p>
+          <h2 id="kpiOverdueCount" class="text-3xl font-bold text-rose-600 mt-1">0</h2>
+          <p class="text-[11px] text-rose-600 font-medium mt-1">คลิกเพื่อจัดการงานค้างทันที</p>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PRIORITY FOCUS ZONE (โฟกัสงานด่วนวันนี้) -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+          <h2 class="text-sm sm:text-base font-bold text-slate-800">
+            🎯 Priority Focus Zone — โฟกัสภารกิจเร่งด่วนและงานครบกำหนดที่ต้องจัดการก่อน
+          </h2>
+        </div>
+        <span id="priorityFocusCount" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          0 รายการเร่งด่วน
+        </span>
+      </div>
+      <div id="priorityFocusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+    </section>
+
+    <!-- 3. COLLAPSIBLE ANALYTICS SECTION -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onclick="toggleAnalyticsSection()"
+        class="w-full px-5 py-3.5 flex items-center justify-between text-left hover:bg-slate-50 transition"
+      >
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+          <span class="font-semibold text-sm sm:text-base text-slate-800">
+            สถิติและกราฟวิเคราะห์ภาระงาน (Workload & Status Analytics)
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-medium text-indigo-600">
+          <span>เปิด / ซ่อนกราฟ</span>
+          <i id="analyticsChevronIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"></i>
+        </div>
+      </button>
+
+      <div id="analyticsCollapsibleBody" class="hidden border-t border-slate-100 p-5 bg-slate-50/40">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">สัดส่วนงานแยกตามสถานะ (Tasks by Status)</h3>
+            <div class="h-60 relative">
+              <canvas id="statusDoughnutChart"></canvas>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">ปริมาณภาระงานแยกตามประเภทงาน (Workload by Task Type)</h3>
+            <div class="h-60 relative">
+              <canvas id="categoryBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ADVANCED FILTER & VIEW SWITCHER BAR -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[240px]">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="ค้นหาชื่อกิจกรรม, รายละเอียด, รหัสโรงเรียน (เช่น 93012001), หรือหมายเหตุ..."
+            class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <!-- View Switcher & Reset -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="filteredTaskCountLabel" class="text-xs font-medium text-slate-500 mr-1">แสดง 0 งาน</span>
+
+          <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button id="viewBtn_table" type="button" onclick="setViewMode('table')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm transition">
+              <i data-lucide="table" class="w-3.5 h-3.5"></i>
+              <span>ตาราง</span>
+            </button>
+            <button id="viewBtn_grid" type="button" onclick="setViewMode('grid')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+              <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+              <span>การ์ด</span>
+            </button>
+            <button id="viewBtn_kanban" type="button" onclick="setViewMode('kanban')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+              <i data-lucide="columns" class="w-3.5 h-3.5"></i>
+              <span>Kanban</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onclick="resetAllFilters()"
+            class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 border border-slate-200 transition"
+          >
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>ล้างตัวกรอง</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5 Dropdown Filters -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+        <select id="filterTaskType" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-slate-50/70 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        <select id="filterCategory" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-slate-50/70 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        <select id="filterPriority" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-slate-50/70 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        <select id="filterStatus" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-slate-50/70 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        <select id="filterTargetGroup" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-slate-50/70 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+      </div>
+    </section>
+
+    <!-- 5. TASKS DISPLAY AREA (TABLE / CARD GRID / KANBAN) -->
+    <!-- View 1: Table View -->
+    <section id="tableViewContainer" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-[12px] font-semibold text-slate-600 uppercase font-ui">
+              <th class="py-3.5 px-4">รหัส / ประเภทงาน</th>
+              <th class="py-3.5 px-4">กิจกรรม/รายงาน &amp; หมวดหมู่</th>
+              <th class="py-3.5 px-4">ชั้นความเร็ว</th>
+              <th class="py-3.5 px-4">กลุ่มงาน / โรงเรียน</th>
+              <th class="py-3.5 px-4">วันเริ่ม - กำหนดส่ง</th>
+              <th class="py-3.5 px-4">ระยะที่เหลือ</th>
+              <th class="py-3.5 px-4">สถานะ</th>
+              <th class="py-3.5 px-4">หมายเหตุ</th>
+              <th class="py-3.5 px-4 text-right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="tasksTableBody" class="text-sm divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- View 2: Card Grid View -->
+    <section id="gridViewContainer" class="hidden">
+      <div id="tasksCardGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- View 3: Kanban Board View -->
+    <section id="kanbanViewContainer" class="hidden">
+      <div id="tasksKanbanBoard" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Floating Action Button (FAB) -->
+  <button
+    onclick="openAddTaskModal()"
+    class="md:hidden fixed bottom-5 right-5 z-30 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-300 flex items-center justify-center hover:scale-105 transition"
+    title="เพิ่มงานใหม่"
+  >
+    <i data-lucide="plus" class="w-6 h-6"></i>
+  </button>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: ADD / EDIT TASK MODAL -->
+  <!-- ===================================================================== -->
+  <div id="taskFormModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          <h3 id="taskModalTitle" class="font-bold text-base sm:text-lg">เพิ่มภารกิจ / โครงการใหม่</h3>
+        </div>
+        <button type="button" onclick="closeTaskModal()" class="text-white/80 hover:text-white text-xl font-bold leading-none">&times;</button>
+      </div>
+
+      <!-- Modal Form Body -->
+      <form onsubmit="handleSaveTaskForm(event)" class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Task ID -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">รหัสงาน (Task ID)</label>
+            <input id="modalTaskId" type="text" readonly class="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-mono text-slate-600" />
+          </div>
+
+          <!-- Task Type -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ประเภทงาน *</label>
+            <select id="modalTaskType" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ชั้นความเร็ว *</label>
+            <select id="modalPriority" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+        </div>
+
+        <!-- Searchable Category Select (23 Items) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">เรื่อง / รายการหมวดหมู่งาน ICT (23 รายการ) *</label>
+            <input
+              id="modalCategorySearch"
+              type="text"
+              oninput="filterModalCategoryDropdown(this.value)"
+              placeholder="พิมพ์ค้นหาหมวดหมู่ (เช่น 06, Cyber, PDPA)..."
+              class="text-xs border border-slate-200 rounded-lg px-2.5 py-1 w-60 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <select id="modalCategory" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">กิจกรรม / รายงาน (Title) *</label>
+          <input
+            id="modalTitle"
+            type="text"
+            required
+            placeholder="ระบุชื่อกิจกรรม โครงการ หรืองานที่ต้องดำเนินการ..."
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <!-- Details -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียด / ขั้นตอนการดำเนินงาน (Details)</label>
+          <textarea
+            id="modalDetails"
+            rows="3"
+            placeholder="ระบุขั้นตอนย่อย รายละเอียดการประสานงาน หรือสิ่งที่ต้องตรวจเช็ค..."
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <!-- Multi-Select Target Group / Schools Combobox -->
+        <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/60 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="block text-xs font-semibold text-slate-700">
+              กลุ่มงาน / โรงเรียนเป้าหมาย (เลือกได้หลายรายการ หรือพิมพ์เพิ่มเอง)
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="selectQuickTargetPreset('ALL_SCHOOLS')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
+                + ทุกโรงเรียน (27 รร.)
+              </button>
+              <button type="button" onclick="selectQuickTargetPreset('OFFICE_ICT')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-violet-100 text-violet-700 hover:bg-violet-200">
+                + กลุ่ม ICT
+              </button>
+              <button type="button" onclick="selectQuickTargetPreset('CLEAR')" class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-200 text-slate-700 hover:bg-slate-300">
+                ล้างที่เลือก
+              </button>
+            </div>
+          </div>
+
+          <!-- Selected Tags -->
+          <div id="selectedTargetTagsContainer" class="flex flex-wrap gap-1.5 min-h-[28px] p-2 rounded-lg bg-white border border-slate-200"></div>
+
+          <!-- Search & Combobox List -->
+          <div class="flex items-center gap-2">
+            <input
+              id="targetSearchInput"
+              type="text"
+              oninput="renderTargetPickerOptions(this.value)"
+              placeholder="ค้นหารหัสโรงเรียน (เช่น 93012001) ชื่อโรงเรียน หรือพิมพ์ชื่อหน่วยงานใหม่..."
+              class="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onclick="addCustomTargetFromSearch()"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              เพิ่มข้อความนี้
+            </button>
+          </div>
+
+          <div id="targetComboboxList" class="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white divide-y divide-slate-100"></div>
+        </div>
+
+        <!-- Dates, Status & Live Remaining Days Preview -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่เริ่มทำ (Start Date)</label>
+            <input id="modalStartDate" type="date" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">กำหนดส่ง (Due Date) *</label>
+            <input
+              id="modalDueDate"
+              type="date"
+              required
+              onchange="updateModalRemainingDaysPreview()"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะงาน (Status)</label>
+            <select
+              id="modalStatus"
+              onchange="updateModalRemainingDaysPreview()"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            ></select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+          <span class="font-medium text-slate-600">การคำนวณระยะที่เหลืออัตโนมัติ (Remaining Days):</span>
+          <span id="modalRemainingPreview" class="inline-flex items-center px-3 py-1 rounded-full text-xs"></span>
+        </div>
+
+        <!-- Remarks -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุ / ลิงก์เอกสารแนบ (รองรับ URL คลิกเปิดได้)</label>
+          <input
+            id="modalRemarks"
+            type="text"
+            placeholder="เช่น รอหนังสือสั่งการ หรือวางลิงก์ Google Drive / เว็บไซต์ https://..."
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onclick="closeTaskModal()"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200"
+          >
+            ยกเลิก
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm"
+          >
+            บันทึกข้อมูลภารกิจ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: SETTINGS MODAL (ตั้งค่าการเชื่อมต่อ GAS & TELEGRAM) -->
+  <!-- ===================================================================== -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-indigo-400"></i>
+          <h3 class="font-bold text-base">ตั้งค่าการเชื่อมต่อฐานข้อมูล &amp; Telegram Bot</h3>
+        </div>
+        <button type="button" onclick="closeSettingsModal()" class="text-white/70 hover:text-white text-xl font-bold leading-none">&times;</button>
+      </div>
+
+      <form onsubmit="handleSaveSettings(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">
+            1. Google Apps Script Web App URL (ฐานข้อมูล Google Sheets)
+          </label>
+          <input
+            id="settingGasUrl"
+            type="url"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <p class="text-[11px] text-slate-500 mt-1">
+            หากเว้นว่างไว้ ระบบจะทำงานในโหมด Local Demo Cache บนเบราว์เซอร์ได้ทันที 100%
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">
+            2. Telegram Bot Token (จาก @BotFather)
+          </label>
+          <input
+            id="settingTelegramToken"
+            type="text"
+            placeholder="เช่น 1234567890:AAH..."
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">
+            3. Telegram Chat ID (ไอดีแชทส่วนตัวหรือกลุ่มแจ้งเตือน)
+          </label>
+          <input
+            id="settingTelegramChatId"
+            type="text"
+            placeholder="เช่น 987654321 หรือ -100123456789"
+            class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <p class="text-[11px] text-slate-500 mt-1">
+            ระบบ Google Apps Script จะส่งสรุปภารกิจประจำวันอัตโนมัติทุกเช้าเวลา 07:30 น. (GMT+7)
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <button
+            type="button"
+            onclick="resetDemoMockData()"
+            class="px-3 py-2 rounded-xl text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200"
+          >
+            รีเซ็ตข้อมูลตัวอย่างเริ่มต้น
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="closeSettingsModal()"
+              class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200"
+            >
+              ปิด
+            </button>
+            <button
+              type="submit"
+              class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+            >
+              บันทึกการตั้งค่า
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: SELF-TEST DIAGNOSTIC MODAL (ตรวจสอบระบบอัตโนมัติ) -->
+  <!-- ===================================================================== -->
+  <div id="selfTestModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden">
+      <div class="px-6 py-4 bg-emerald-700 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+          <h3 class="font-bold text-base">Pre-Flight System Diagnostic (ตรวจสอบความพร้อมของระบบ)</h3>
+        </div>
+        <button type="button" onclick="closeSelfTestModal()" class="text-white/80 hover:text-white text-xl font-bold leading-none">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div id="selfTestSummaryBanner"></div>
+        <div id="selfTestResultsContainer" class="space-y-2.5"></div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <span>สามารถรันผ่าน Terminal ได้ด้วยคำสั่ง: <code class="bg-slate-100 px-2 py-0.5 rounded font-mono text-slate-800">node test-suite.js</code></span>
+          <button
+            type="button"
+            onclick="closeSelfTestModal()"
+            class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white"
+          >
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
+

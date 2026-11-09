@@ -1,0 +1,19 @@
+# Dependencies & OS Files
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment & Secrets (Never commit actual credentials or production script IDs)
+.env
+.env.*
+!.env.example
+.clasp.json
+.clasprc.json
+
+# Logs & Temp Files
+*.log
+npm-debug.log*
+.tmp/
+temp/
+
