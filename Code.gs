@@ -9,6 +9,7 @@
 
 const SHEET_TASKS = 'Tasks';
 const SHEET_CONFIG = 'Config';
+const DEFAULT_ADMIN_PIN = '2570';
 
 const TASK_HEADERS = [
   'id',
@@ -58,6 +59,7 @@ function setupDatabase() {
     configSheet.setFrozenRows(1);
 
     const nowIso = new Date().toISOString();
+    configSheet.appendRow(['adminPin', DEFAULT_ADMIN_PIN, nowIso]);
     configSheet.appendRow(['telegramBotToken', '', nowIso]);
     configSheet.appendRow(['telegramChatId', '', nowIso]);
     configSheet.appendRow(['morningAlertTime', '07:30', nowIso]);
@@ -102,9 +104,10 @@ function getAllTasksFromSheet() {
   setupDatabase();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_TASKS);
-  const data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
 
+  const data = sheet.getRange(1, 1, lastRow, TASK_HEADERS.length).getValues();
   const headers = data[0];
   const tasks = [];
   const tz = 'Asia/Bangkok';
@@ -121,7 +124,6 @@ function getAllTasksFromSheet() {
       }
       item[key] = val !== undefined && val !== null ? String(val) : '';
     }
-    // Parse targetGroup back to array if stored as JSON or comma-separated string
     try {
       if (item.targetGroup && item.targetGroup.startsWith('[')) {
         item.targetGroup = JSON.parse(item.targetGroup);
@@ -156,7 +158,20 @@ function getConfigFromSheet() {
       config[String(key)] = value !== undefined && value !== null ? String(value) : '';
     }
   }
+  if (!config.adminPin) {
+    config.adminPin = DEFAULT_ADMIN_PIN;
+  }
   return config;
+}
+
+/**
+ * Helper: Verify PIN
+ */
+function verifyAdminPin(suppliedPin, configObj) {
+  const cfg = configObj || getConfigFromSheet();
+  const activePin = String(cfg.adminPin || DEFAULT_ADMIN_PIN).trim();
+  // Allow if suppliedPin matches activePin
+  return String(suppliedPin || '').trim() === activePin;
 }
 
 /**
@@ -194,6 +209,8 @@ function saveConfigToSheet(newConfig) {
 function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'getAll';
+    const suppliedPin = (e && e.parameter && e.parameter.pin) ? e.parameter.pin : '';
+
     if (action === 'ping') {
       return createJsonResponse({
         success: true,
@@ -203,8 +220,26 @@ function doGet(e) {
       });
     }
 
-    const tasks = getAllTasksFromSheet();
     const config = getConfigFromSheet();
+
+    if (action === 'verifyPin') {
+      const valid = verifyAdminPin(suppliedPin, config);
+      return createJsonResponse({
+        success: valid,
+        authenticated: valid,
+        error: valid ? null : 'รหัส PIN ไม่ถูกต้อง'
+      });
+    }
+
+    if (!verifyAdminPin(suppliedPin, config)) {
+      return createJsonResponse({
+        success: false,
+        authRequired: true,
+        error: 'กรุณาใส่รหัส PIN ที่ถูกต้องเพื่อเข้าถึงข้อมูล'
+      });
+    }
+
+    const tasks = getAllTasksFromSheet();
 
     return createJsonResponse({
       success: true,
@@ -212,7 +247,7 @@ function doGet(e) {
       config: {
         telegramBotToken: config.telegramBotToken || '',
         telegramChatId: config.telegramChatId || '',
-        morningAlertTime: config.morningAlertTime || '07:30',
+        morningAlertTime: '07:30',
         officerName: config.officerName || 'นักวิชาการคอมพิวเตอร์ สพม.พัทลุง'
       },
       timestamp: new Date().toISOString()
@@ -235,6 +270,26 @@ function doPost(e) {
     const rawBody = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
     const payload = JSON.parse(rawBody);
     const action = payload.action || '';
+    const suppliedPin = payload.pin || '';
+
+    const config = getConfigFromSheet();
+
+    if (action === 'verifyPin') {
+      const valid = verifyAdminPin(suppliedPin, config);
+      return createJsonResponse({
+        success: valid,
+        authenticated: valid,
+        error: valid ? null : 'รหัส PIN ไม่ถูกต้อง'
+      });
+    }
+
+    if (!verifyAdminPin(suppliedPin, config)) {
+      return createJsonResponse({
+        success: false,
+        authRequired: true,
+        error: 'รหัส PIN ไม่ถูกต้อง ไม่สามารถแก้ไขฐานข้อมูลได้'
+      });
+    }
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const taskSheet = ss.getSheetByName(SHEET_TASKS);
@@ -306,7 +361,6 @@ function doPost(e) {
       }
 
       if (!updated) {
-        // Upsert if not found in sheet yet
         const newRow = [
           task.id,
           task.taskType || 'งานประจำ',
@@ -370,15 +424,29 @@ function doPost(e) {
         }
       }
       return createJsonResponse({
-        success: false,
-        error: 'ไม่พบรหัสงานที่ต้องการลบ: ' + taskId
+        success: true,
+        message: 'ไม่พบในชีตหรือลบไปแล้ว',
+        id: taskId
+      });
+    }
+
+    if (action === 'clearAllTasks') {
+      const lastRow = taskSheet.getLastRow();
+      if (lastRow > 1) {
+        taskSheet.deleteRows(2, lastRow - 1);
+      }
+      return createJsonResponse({
+        success: true,
+        message: 'ล้างข้อมูลงานทั้งหมดใน Google Sheets เรียบร้อยแล้ว',
+        tasks: []
       });
     }
 
     if (action === 'syncAllTasks') {
       const tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
-      if (taskSheet.getLastRow() > 1) {
-        taskSheet.getRange(2, 1, taskSheet.getLastRow() - 1, TASK_HEADERS.length).clearContent();
+      const lastRow = taskSheet.getLastRow();
+      if (lastRow > 1) {
+        taskSheet.deleteRows(2, lastRow - 1);
       }
       if (tasks.length > 0) {
         const rows = tasks.map(function(task) {
@@ -416,7 +484,11 @@ function doPost(e) {
       return createJsonResponse({
         success: true,
         message: 'บันทึกการตั้งค่าระบบลง Google Sheets สำเร็จ',
-        config: updatedConfig
+        config: {
+          telegramBotToken: updatedConfig.telegramBotToken || '',
+          telegramChatId: updatedConfig.telegramChatId || '',
+          morningAlertTime: '07:30'
+        }
       });
     }
 
@@ -600,14 +672,12 @@ function setupDailyTrigger() {
   const handlerName = 'sendMorningTelegramDigest';
   const existingTriggers = ScriptApp.getProjectTriggers();
 
-  // Remove old duplicate triggers for sendMorningTelegramDigest
   for (let i = 0; i < existingTriggers.length; i++) {
     if (existingTriggers[i].getHandlerFunction() === handlerName) {
       ScriptApp.deleteTrigger(existingTriggers[i]);
     }
   }
 
-  // Create new daily trigger at 07:30 AM (Asia/Bangkok)
   ScriptApp.newTrigger(handlerName)
     .timeBased()
     .inTimezone('Asia/Bangkok')
@@ -621,4 +691,3 @@ function setupDailyTrigger() {
     message: 'ตั้งเวลาแจ้งเตือน Telegram อัตโนมัติทุกเช้าเวลา 07:30 น. (Asia/Bangkok) เรียบร้อยแล้ว'
   };
 }
-

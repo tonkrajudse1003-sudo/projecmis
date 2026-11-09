@@ -7,11 +7,16 @@
  */
 
 const STORAGE_KEYS = {
-  TASKS: 'sesao_ptl_ict_tasks_v1',
-  CONFIG: 'sesao_ptl_ict_config_v1',
+  TASKS: 'sesao_ptl_ict_tasks_v2_clean',
+  LEGACY_TASKS: 'sesao_ptl_ict_tasks_v1',
+  CONFIG: 'sesao_ptl_ict_config_v2',
   VIEW_MODE: 'sesao_ptl_ict_view_mode_v1',
-  ANALYTICS_OPEN: 'sesao_ptl_ict_analytics_open_v1'
+  ANALYTICS_OPEN: 'sesao_ptl_ict_analytics_open_v1',
+  AUTH_SESSION: 'sesao_ptl_ict_auth_session_v1'
 };
+
+const DEFAULT_ADMIN_PIN = '2570';
+const DEFAULT_SESSION_DAYS = 90; // 90 days long session so user doesn't have to re-login frequently
 
 // 1. ประเภทงาน (Task Types - 5 รายการ)
 const TASK_TYPES = [
@@ -226,7 +231,7 @@ function generateTaskId(existingTasks, dateStr) {
 
 /**
  * ============================================================================
- * REALISTIC INITIAL MOCK DATA FOR สพม.พัทลุง
+ * DEMO MOCK DATA GENERATOR (Used ONLY for Self-Test Sandbox or Manual Demo Load)
  * ============================================================================
  */
 function getInitialMockTasks(referenceTodayStr) {
@@ -288,96 +293,6 @@ function getInitialMockTasks(referenceTodayStr) {
       status: 'รอดำเนินการ',
       remarks: 'ส่งหนังสือแจ้งเตือนรอบที่ 2 ไปยังโรงเรียนที่ยังไม่กดยืนยันข้อมูล',
       updatedAt: new Date().toISOString()
-    },
-    {
-      id: `TASK-${compactDate}-004`,
-      taskType: 'โครงการ/กิจกรรม',
-      category: '13. งานตั้งงบครุภัณฑ์คอมพิวเตอร์และอุปกรณ์ต่อพ่วง',
-      priority: 'ด่วนที่สุด',
-      title: 'จัดทำคำขอตั้งงบประมาณครุภัณฑ์คอมพิวเตอร์และระบบเครือข่ายของโรงเรียนในสังกัด',
-      details: 'รวบรวมเอกสารคำขอตั้งงบประมาณ Spec คอมพิวเตอร์ห้องปฏิบัติการ และตรวจสอบใบเสนอราคา 3 ราย',
-      targetGroup: [
-        '93012002 - เตรียมอุดมศึกษาพัฒนาการ พัทลุง',
-        '93012008 - กงหราพิชากร',
-        '93012012 - ตะโหมด',
-        '93012022 - ป่าบอนพิทยาคม',
-        '93012026 - เขาชัยสน'
-      ],
-      startDate: addDaysToDateStr(today, -3),
-      dueDate: addDaysToDateStr(today, 1),
-      status: 'กำลังดำเนินการ',
-      remarks: 'ต้องสรุปเล่มส่ง สพฐ. ภายในวันพรุ่งนี้',
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: `TASK-${compactDate}-005`,
-      taskType: 'โครงการ/กิจกรรม',
-      category: '10. โครงการ DLICT',
-      priority: 'ปกติ',
-      title: 'นิเทศและติดตามคุณภาพระบบอินเทอร์เน็ตความเร็วสูงเพื่อการศึกษา (DLICT)',
-      details: 'ลงพื้นที่ทดสอบความเร็วสัญญาณอินเทอร์เน็ตและจุดกระจายสัญญาณ Access Point ในโรงเรียนกลุ่มเป้าหมาย',
-      targetGroup: [
-        'กลุ่มส่งเสริมการศึกษาทางไกล เทคโนโลยีสารสนเทศและการสื่อสาร (ICT)',
-        '93012003 - พรหมพินิตชัยบุรี',
-        '93012004 - ประภัสสรรังสิต',
-        '93012020 - ศรีบรรพตพิทยาคม'
-      ],
-      startDate: today,
-      dueDate: addDaysToDateStr(today, 7),
-      status: 'รอดำเนินการ',
-      remarks: 'ประสานงานตารางนัดหมายกับรองผู้อำนวยการฝ่ายบริหารทั่วไปของโรงเรียน',
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: `TASK-${compactDate}-006`,
-      taskType: 'งานประจำ',
-      category: '09. งานระบบ PDPA',
-      priority: 'ด่วน',
-      title: 'จัดทำประกาศนโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA) และแบบฟอร์มขอความยินยอมออนไลน์',
-      details: 'อัปเดตหน้าเว็บไซต์ สพม.พัทลุง ให้มีแบนเนอร์ Cookie Consent และคลังแบบฟอร์ม PDPA สำหรับข้าราชการครูและนักเรียน',
-      targetGroup: [
-        'สพม.พัทลุง (ภาพรวมสำนักงานเขตฯ)',
-        'กลุ่มกฎหมายและคดี',
-        'กลุ่มอำนวยการ'
-      ],
-      startDate: addDaysToDateStr(today, -10),
-      dueDate: addDaysToDateStr(today, -4),
-      status: 'ไม่เสร็จตามที่กำหนด',
-      remarks: 'รอร่างประกาศฉบับแก้ไขจากคณะกรรมการ PDPA ระดับเขตพื้นที่',
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: `TASK-${compactDate}-007`,
-      taskType: 'งานอีเว้นท์',
-      category: '15. งานอบรม/ประชุม/สัมมนา',
-      priority: 'ปกติ',
-      title: 'เตรียมระบบประชุมทางไกล (Zoom / OBEC Conference) และถ่ายทอดสดการประชุมผู้บริหารสถานศึกษา',
-      details: 'เซ็ตอัปไมโครโฟน กล้อง PTZ ระบบสลับภาพ OBS และทดสอบสัญญาณภาพ-เสียงห้องประชุม สพม.พัทลุง',
-      targetGroup: [
-        'ทุกโรงเรียนในสังกัด (27 โรงเรียน)',
-        'สพม.พัทลุง (ภาพรวมสำนักงานเขตฯ)'
-      ],
-      startDate: addDaysToDateStr(today, -5),
-      dueDate: addDaysToDateStr(today, -1),
-      status: 'เสร็จแล้ว',
-      remarks: 'ดำเนินการถ่ายทอดสดและบันทึกวิดีโอเรียบร้อยแล้ว',
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: `TASK-${compactDate}-008`,
-      taskType: 'โครงการ/กิจกรรม',
-      category: '05. งานระบบ Web Development',
-      priority: 'ด่วน',
-      title: 'พัฒนาระบบบริหารจัดการโครงการและภารกิจงาน ICT (Personal Project & Task Manager)',
-      details: 'พัฒนา SPA เชื่อมต่อฐานข้อมูล Google Sheets และระบบแจ้งเตือนภารกิจรายวันผ่าน Telegram Bot เวลา 07:30 น.',
-      targetGroup: [
-        'กลุ่มส่งเสริมการศึกษาทางไกล เทคโนโลยีสารสนเทศและการสื่อสาร (ICT)'
-      ],
-      startDate: addDaysToDateStr(today, -1),
-      dueDate: addDaysToDateStr(today, 5),
-      status: 'เสร็จแล้ว',
-      remarks: 'พร้อมใช้งานทั้งบน Desktop และสมาร์ทโฟน',
-      updatedAt: new Date().toISOString()
     }
   ];
 
@@ -385,6 +300,30 @@ function getInitialMockTasks(referenceTodayStr) {
     ...t,
     remainingDays: calculateRemainingDays(t.dueDate, today)
   }));
+}
+
+/**
+ * ============================================================================
+ * PIN AUTHENTICATION & LONG-LIVED SESSION HELPERS
+ * ============================================================================
+ */
+function createAuthSessionPayload(pin, durationDays = DEFAULT_SESSION_DAYS) {
+  const days = Number(durationDays) > 0 ? Number(durationDays) : DEFAULT_SESSION_DAYS;
+  const now = Date.now();
+  return {
+    authenticated: true,
+    pin: String(pin || DEFAULT_ADMIN_PIN).trim(),
+    createdAt: now,
+    expiresAt: now + days * 24 * 60 * 60 * 1000,
+    durationDays: days
+  };
+}
+
+function isAuthSessionValid(sessionObj, expectedPin) {
+  if (!sessionObj || !sessionObj.authenticated) return false;
+  if (!sessionObj.expiresAt || Date.now() > Number(sessionObj.expiresAt)) return false;
+  if (expectedPin && String(sessionObj.pin) !== String(expectedPin)) return false;
+  return true;
 }
 
 /**
@@ -525,9 +464,9 @@ function runBuiltInSelfTest() {
     });
   }
 
-  // TEST 3: Isolated CRUD & Filtering Simulation (Does not corrupt user data)
+  // TEST 3: Isolated CRUD, Complete Deletion to 0 Tasks & PIN Session Check
   try {
-    const sandboxTasks = getInitialMockTasks('2026-11-09');
+    let sandboxTasks = getInitialMockTasks('2026-11-09');
     const initialCount = sandboxTasks.length;
 
     // Create temp task
@@ -560,27 +499,39 @@ function runBuiltInSelfTest() {
       (t) => Array.isArray(t.targetGroup) && t.targetGroup.some((g) => g.includes('93012001'))
     );
 
-    // Delete temp task
+    // Delete single task
     const afterDelete = sandboxTasks.filter((t) => t.id !== tempId);
+
+    // Clear all tasks to 0 and verify it stays 0
+    sandboxTasks = [];
+    const emptyStaysZero = Array.isArray(sandboxTasks) && sandboxTasks.length === 0;
+
+    // Verify 90-day PIN session logic
+    const session90 = createAuthSessionPayload('2570', 90);
+    const validPinCheck = isAuthSessionValid(session90, '2570');
+    const invalidPinCheck = !isAuthSessionValid(session90, '9999');
 
     const passed =
       afterCreateCount === initialCount + 1 &&
       updatedStatus === 'เสร็จแล้ว' &&
       filteredBySchool.length >= 1 &&
-      afterDelete.length === initialCount;
+      afterDelete.length === initialCount &&
+      emptyStaysZero &&
+      validPinCheck &&
+      invalidPinCheck;
 
     results.push({
       id: 'TEST-3',
-      name: 'Test 3: จำลองการทำ CRUD (เพิ่ม/อัปเดตสถานะ/กรองโรงเรียน/ลบ) ในโหมด Sandbox',
+      name: 'Test 3: จำลอง CRUD, การล้างฐานข้อมูลเป็น 0 รายการ และระบบล็อก PIN (Session 90 วัน)',
       passed,
       details: passed
-        ? `จำลองสร้างรหัส ${tempId} -> เปลี่ยนสถานะเป็น "${updatedStatus}" -> ค้นหาโรงเรียนรหัส 93012001 (${filteredBySchool.length} งาน) -> ลบคืนค่าเดิม (${afterDelete.length} งาน) โดยไม่กระทบข้อมูลจริง`
-        : 'การจำลอง CRUD ใน Sandbox ล้มเหลว'
+        ? `สร้าง ${tempId} -> อัปเดตสถานะ -> ลบงานและล้างฐานข้อมูลเหลือ 0 รายการได้จริง -> ตรวจสอบ Session PIN 90 วันผ่านสมบูรณ์`
+        : 'การจำลอง CRUD, ล้างข้อมูล หรือ PIN Session ล้มเหลว'
     });
   } catch (err) {
     results.push({
       id: 'TEST-3',
-      name: 'Test 3: จำลองการทำ CRUD ในโหมด Sandbox',
+      name: 'Test 3: จำลองการทำ CRUD และระบบ PIN Session',
       passed: false,
       details: err.message
     });
@@ -591,6 +542,7 @@ function runBuiltInSelfTest() {
     const sampleTasks = getInitialMockTasks('2026-11-09');
     const samplePostPayload = JSON.stringify({
       action: 'createTask',
+      pin: DEFAULT_ADMIN_PIN,
       task: sampleTasks[0]
     });
     const parsedPayload = JSON.parse(samplePostPayload);
@@ -598,6 +550,7 @@ function runBuiltInSelfTest() {
 
     const hasRequiredFields =
       parsedPayload.action === 'createTask' &&
+      parsedPayload.pin === DEFAULT_ADMIN_PIN &&
       parsedPayload.task.id &&
       parsedPayload.task.taskType &&
       parsedPayload.task.category &&
@@ -613,10 +566,10 @@ function runBuiltInSelfTest() {
 
     results.push({
       id: 'TEST-4',
-      name: 'Test 4: ตรวจสอบโครงสร้าง JSON Payload (GAS CORS text/plain) และรูปแบบข้อความ Telegram HTML',
+      name: 'Test 4: ตรวจสอบโครงสร้าง JSON Payload (พร้อมแนบ PIN) และรูปแบบข้อความ Telegram HTML',
       passed,
       details: passed
-        ? `JSON Payload พร้อมส่งผ่าน POST (text/plain) และสร้างข้อความแจ้งเตือน Telegram 07:30 น. ครบทั้ง 3 หมวดหลัก (${telegramHtml.length} ตัวอักษร)`
+        ? `JSON Payload พร้อมส่งผ่าน POST (text/plain + PIN) และสร้างข้อความแจ้งเตือน Telegram 07:30 น. ครบทั้ง 3 หมวดหลัก`
         : 'โครงสร้าง JSON หรือรูปแบบข้อความ Telegram ไม่สมบูรณ์'
     });
   } catch (err) {
@@ -653,10 +606,14 @@ const AppState = {
   tasks: [],
   config: {
     gasWebAppUrl: DEFAULT_GAS_WEB_APP_URL,
+    adminPin: DEFAULT_ADMIN_PIN,
+    sessionDurationDays: DEFAULT_SESSION_DAYS,
     telegramBotToken: '',
     telegramChatId: '',
     morningAlertTime: '07:30'
   },
+  isAuthenticated: false,
+  authExpiresAt: null,
   filters: {
     search: '',
     taskType: 'ALL',
@@ -683,20 +640,39 @@ function loadStateFromStorage() {
   if (!isBrowserEnv()) return;
 
   try {
+    // Remove old legacy mock cache key if present
+    localStorage.removeItem(STORAGE_KEYS.LEGACY_TASKS);
+
     const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
     if (savedConfig) {
       const parsedConfig = JSON.parse(savedConfig);
       AppState.config = {
         ...AppState.config,
         ...parsedConfig,
-        gasWebAppUrl: parsedConfig.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL
+        gasWebAppUrl: parsedConfig.gasWebAppUrl || DEFAULT_GAS_WEB_APP_URL,
+        adminPin: parsedConfig.adminPin || DEFAULT_ADMIN_PIN,
+        sessionDurationDays: Number(parsedConfig.sessionDurationDays) || DEFAULT_SESSION_DAYS
       };
     }
 
+    // Check Auth Session
+    const savedSession = localStorage.getItem(STORAGE_KEYS.AUTH_SESSION);
+    if (savedSession) {
+      const parsedSession = JSON.parse(savedSession);
+      if (isAuthSessionValid(parsedSession, AppState.config.adminPin)) {
+        AppState.isAuthenticated = true;
+        AppState.authExpiresAt = parsedSession.expiresAt;
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
+        AppState.isAuthenticated = false;
+      }
+    }
+
+    // Load tasks: respect empty array `[]` and NEVER force mock tasks to respawn!
     const savedTasks = localStorage.getItem(STORAGE_KEYS.TASKS);
-    if (savedTasks) {
+    if (savedTasks !== null) {
       const parsed = JSON.parse(savedTasks);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         AppState.tasks = parsed.map((t) => ({
           ...t,
           targetGroup: Array.isArray(t.targetGroup)
@@ -707,11 +683,10 @@ function loadStateFromStorage() {
           remainingDays: calculateRemainingDays(t.dueDate)
         }));
       } else {
-        AppState.tasks = getInitialMockTasks();
-        saveTasksToStorage();
+        AppState.tasks = [];
       }
     } else {
-      AppState.tasks = getInitialMockTasks();
+      AppState.tasks = [];
       saveTasksToStorage();
     }
 
@@ -727,7 +702,7 @@ function loadStateFromStorage() {
     AppState.analyticsOpen = savedAnalytics === 'true';
   } catch (err) {
     console.error('Error loading state from localStorage:', err);
-    AppState.tasks = getInitialMockTasks();
+    AppState.tasks = [];
   }
 }
 
@@ -739,6 +714,112 @@ function saveTasksToStorage() {
 function saveConfigToStorage() {
   if (!isBrowserEnv()) return;
   localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(AppState.config));
+}
+
+function saveAuthSessionToStorage(pin, durationDays) {
+  if (!isBrowserEnv()) return;
+  const sessionObj = createAuthSessionPayload(pin, durationDays);
+  localStorage.setItem(STORAGE_KEYS.AUTH_SESSION, JSON.stringify(sessionObj));
+  AppState.isAuthenticated = true;
+  AppState.authExpiresAt = sessionObj.expiresAt;
+}
+
+/**
+ * ============================================================================
+ * PIN LOCK SCREEN HANDLERS
+ * ============================================================================
+ */
+function renderAuthLockScreenState() {
+  if (!isBrowserEnv()) return;
+  const lockModal = document.getElementById('authLockModal');
+  const mainContent = document.getElementById('appProtectedWrapper');
+  if (!lockModal) return;
+
+  if (AppState.isAuthenticated) {
+    lockModal.classList.add('hidden');
+    lockModal.classList.remove('flex');
+    if (mainContent) mainContent.classList.remove('blur-md', 'pointer-events-none', 'select-none');
+  } else {
+    lockModal.classList.remove('hidden');
+    lockModal.classList.add('flex');
+    if (mainContent) mainContent.classList.add('blur-md', 'pointer-events-none', 'select-none');
+    setTimeout(() => {
+      const pinInput = document.getElementById('authPinInput');
+      if (pinInput) pinInput.focus();
+    }, 100);
+  }
+}
+
+async function handleVerifyPinLogin(event) {
+  if (event) event.preventDefault();
+  const pinInput = document.getElementById('authPinInput');
+  const durationSelect = document.getElementById('authSessionDurationSelect');
+  const errEl = document.getElementById('authPinErrorMsg');
+
+  const enteredPin = (pinInput ? pinInput.value : '').trim();
+  const durationDays = durationSelect ? Number(durationSelect.value) : DEFAULT_SESSION_DAYS;
+
+  if (!enteredPin) {
+    if (errEl) {
+      errEl.textContent = 'กรุณากรอกรหัส PIN ก่อนเข้าใช้งาน';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const expectedPin = String(AppState.config.adminPin || DEFAULT_ADMIN_PIN).trim();
+  if (enteredPin !== expectedPin) {
+    if (errEl) {
+      errEl.textContent = 'รหัส PIN ไม่ถูกต้อง กรุณาลองอีกครั้ง';
+      errEl.classList.remove('hidden');
+    }
+    if (pinInput) pinInput.value = '';
+    return;
+  }
+
+  // Authenticated!
+  if (errEl) errEl.classList.add('hidden');
+  if (pinInput) pinInput.value = '';
+  AppState.config.sessionDurationDays = durationDays;
+  saveConfigToStorage();
+  saveAuthSessionToStorage(enteredPin, durationDays);
+
+  renderAuthLockScreenState();
+  renderAll();
+
+  // Trigger background sync once unlocked
+  syncWithGasBackend(true);
+
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: `เข้าสู่ระบบสำเร็จ (จดจำ Session นาน ${durationDays} วัน)`,
+      showConfirmButton: false,
+      timer: 2200
+    });
+  }
+}
+
+function lockSystemSession() {
+  if (!isBrowserEnv()) return;
+  localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
+  AppState.isAuthenticated = false;
+  AppState.authExpiresAt = null;
+  renderAuthLockScreenState();
+}
+
+function appendPinDigit(digit) {
+  const pinInput = document.getElementById('authPinInput');
+  if (!pinInput) return;
+  if (digit === 'CLEAR') {
+    pinInput.value = '';
+  } else if (digit === 'BACK') {
+    pinInput.value = pinInput.value.slice(0, -1);
+  } else if (pinInput.value.length < 12) {
+    pinInput.value += String(digit);
+  }
 }
 
 function escapeHtml(str) {
@@ -779,27 +860,6 @@ function getPriorityBadgeHtml(priority) {
   </span>`;
 }
 
-function getStatusBadgeHtml(status) {
-  switch (status) {
-    case 'เสร็จแล้ว':
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> เสร็จแล้ว
-      </span>`;
-    case 'กำลังดำเนินการ':
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-        <i data-lucide="loader" class="w-3.5 h-3.5"></i> กำลังดำเนินการ
-      </span>`;
-    case 'ไม่เสร็จตามที่กำหนด':
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ไม่เสร็จตามที่กำหนด
-      </span>`;
-    default:
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-        <i data-lucide="clock" class="w-3.5 h-3.5"></i> รอดำเนินการ
-      </span>`;
-  }
-}
-
 function getTaskTypeBadgeHtml(taskType) {
   const colorMap = {
     'โครงการ/กิจกรรม': 'bg-violet-50 text-violet-700 border-violet-200',
@@ -835,12 +895,10 @@ function getFilteredTasks() {
       remainingDays: calculateRemainingDays(t.dueDate)
     }))
     .filter((task) => {
-      // KPI Card Filter
       if (kpiFilter === 'URGENT' && !isTaskUrgentKpi(task)) return false;
       if (kpiFilter === 'IN_PROGRESS' && task.status !== 'กำลังดำเนินการ') return false;
       if (kpiFilter === 'OVERDUE' && !isTaskOverdueKpi(task)) return false;
 
-      // Dropdown Filters
       if (taskType !== 'ALL' && task.taskType !== taskType) return false;
       if (category !== 'ALL' && task.category !== category) return false;
       if (priority !== 'ALL' && task.priority !== priority) return false;
@@ -853,7 +911,6 @@ function getFilteredTasks() {
         if (!hasMatch) return false;
       }
 
-      // Search Query
       if (q) {
         const targetsStr = Array.isArray(task.targetGroup) ? task.targetGroup.join(' ') : String(task.targetGroup || '');
         const haystack = [
@@ -873,7 +930,6 @@ function getFilteredTasks() {
       return true;
     })
     .sort((a, b) => {
-      // Incomplete tasks first, sorted by remainingDays ascending
       const aDone = a.status === 'เสร็จแล้ว' ? 1 : 0;
       const bDone = b.status === 'เสร็จแล้ว' ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
@@ -898,7 +954,7 @@ function renderConnectionBadge() {
   } else {
     badgeEl.className =
       'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200';
-    badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> โหมดจำลองข้อมูลในเครื่อง (Local Demo Cache)`;
+    badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> โหมดบันทึกในเครื่อง`;
   }
 }
 
@@ -918,7 +974,6 @@ function renderKpiCards() {
   if (elInProgress) elInProgress.textContent = inProgressCount;
   if (elOverdue) elOverdue.textContent = overdueCount;
 
-  // Highlight active KPI card
   const kpiCards = {
     ALL: document.getElementById('kpiCardAll'),
     URGENT: document.getElementById('kpiCardUrgent'),
@@ -953,9 +1008,14 @@ function renderPriorityFocusZone() {
 
   if (focusTasks.length === 0) {
     container.innerHTML = `
-      <div class="col-span-full bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 text-emerald-800">
-        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
-        <span class="text-sm font-medium">ยอดเยี่ยม! วันนี้ไม่มีงานค้างหรือภารกิจเร่งด่วนในระยะ 3 วัน</span>
+      <div class="col-span-full bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-3 text-emerald-800">
+        <div class="flex items-center gap-3">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+          <span class="text-sm font-medium">ไม่มีงานค้างหรือภารกิจเร่งด่วนในระยะ 3 วัน (พร้อมเริ่มเพิ่มงานใหม่ของคุณได้เลย)</span>
+        </div>
+        <button onclick="openAddTaskModal()" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">
+          + เพิ่มงานแรก
+        </button>
       </div>
     `;
     return;
@@ -986,15 +1046,15 @@ function renderPriorityFocusZone() {
             <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${escapeHtml(task.category)}</p>
           </div>
           <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-            <span class="text-slate-600 truncate max-w-[65%]" title="${escapeHtml(targets.join(', '))}">
+            <span class="text-slate-600 truncate max-w-[55%]" title="${escapeHtml(targets.join(', '))}">
               🎯 ${escapeHtml(targets[0] || '-')}${targets.length > 1 ? ` +${targets.length - 1}` : ''}
             </span>
             <div class="flex items-center gap-1">
-              <button onclick="quickCompleteTask('${escapeHtml(task.id)}')" class="px-2 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition" title="ทำเครื่องหมายว่าเสร็จแล้ว">
+              <button onclick="quickCompleteTask('${escapeHtml(task.id)}')" class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition" title="ทำเครื่องหมายว่าเสร็จแล้ว">
                 เสร็จแล้ว
               </button>
-              <button onclick="openEditTaskModal('${escapeHtml(task.id)}')" class="p-1 rounded-md text-slate-500 hover:bg-slate-100" title="แก้ไข">
-                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              <button onclick="openEditTaskModal('${escapeHtml(task.id)}')" class="p-1.5 rounded-md text-slate-500 hover:bg-slate-100" title="แก้ไข">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
@@ -1040,11 +1100,14 @@ function renderTasksTableView(filteredTasks) {
   if (filteredTasks.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="py-12 text-center text-slate-500">
-          <div class="flex flex-col items-center justify-center gap-2">
-            <i data-lucide="inbox" class="w-10 h-10 text-slate-300"></i>
-            <p class="font-medium text-slate-600">ไม่พบรายการงานที่ตรงกับเงื่อนไขการค้นหา</p>
-            <button onclick="resetAllFilters()" class="mt-1 text-xs text-indigo-600 hover:underline font-medium">ล้างตัวกรองทั้งหมด</button>
+        <td colspan="9" class="py-14 text-center text-slate-500">
+          <div class="flex flex-col items-center justify-center gap-2.5">
+            <i data-lucide="clipboard-plus" class="w-11 h-11 text-indigo-300"></i>
+            <p class="font-semibold text-slate-700">ยังไม่มีรายการงานในขณะนี้</p>
+            <p class="text-xs text-slate-400">คลิกปุ่ม "+ เพิ่มงานใหม่" เพื่อเริ่มบันทึกภารกิจจริงของคุณได้เลย</p>
+            <button onclick="openAddTaskModal()" class="mt-1 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+              + เพิ่มภารกิจใหม่
+            </button>
           </div>
         </td>
       </tr>
@@ -1140,9 +1203,13 @@ function renderTasksGridView(filteredTasks) {
 
   if (filteredTasks.length === 0) {
     grid.innerHTML = `
-      <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500">
-        <i data-lucide="inbox" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
-        <p class="font-medium text-slate-600">ไม่พบรายการงานที่ตรงกับตัวกรอง</p>
+      <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500 space-y-3">
+        <i data-lucide="clipboard-plus" class="w-12 h-12 text-indigo-300 mx-auto"></i>
+        <p class="font-semibold text-slate-700 text-base">ยังไม่มีรายการงานในขณะนี้</p>
+        <p class="text-xs text-slate-400">กดปุ่ม "+ เพิ่มงานใหม่" ด้านล่างหรือมุมขวาบนเพื่อเริ่มคีย์งานได้เลย</p>
+        <button onclick="openAddTaskModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+          + เพิ่มงานใหม่
+        </button>
       </div>
     `;
     return;
@@ -1197,24 +1264,24 @@ function renderTasksGridView(filteredTasks) {
             <div class="flex items-center justify-between gap-2 pt-1">
               <select
                 onchange="handleQuickStatusChange('${escapeHtml(task.id)}', this.value)"
-                class="flex-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                class="flex-1 text-sm sm:text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 ${STATUSES.map(
                   (st) =>
                     `<option value="${escapeHtml(st)}" ${task.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`
                 ).join('')}
               </select>
-              <div class="inline-flex items-center gap-1">
+              <div class="inline-flex items-center gap-1.5">
                 <button
                   onclick="openEditTaskModal('${escapeHtml(task.id)}')"
-                  class="p-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200"
+                  class="p-2.5 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200"
                   title="แก้ไข"
                 >
                   <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </button>
                 <button
                   onclick="confirmDeleteTask('${escapeHtml(task.id)}')"
-                  class="p-2 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
+                  class="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200"
                   title="ลบ"
                 >
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -1243,7 +1310,7 @@ function renderTasksKanbanView(filteredTasks) {
     .map((col) => {
       const colTasks = filteredTasks.filter((t) => t.status === col.status);
       return `
-        <div class="bg-slate-100/80 rounded-2xl p-3 border border-slate-200 flex flex-col min-h-[380px]">
+        <div class="bg-slate-100/80 rounded-2xl p-3 border border-slate-200 flex flex-col min-h-[340px]">
           <div class="flex items-center justify-between px-3 py-2 rounded-xl border ${col.headerBg} mb-3">
             <div class="flex items-center gap-2 font-semibold text-sm">
               <span class="w-2.5 h-2.5 rounded-full ${col.dot}"></span>
@@ -1271,11 +1338,11 @@ function renderTasksKanbanView(filteredTasks) {
                           <div class="flex items-center justify-between pt-2 border-t border-slate-100">
                             <span class="text-[11px] text-slate-500">ส่ง: ${formatThaiShortDate(task.dueDate)}</span>
                             <div class="flex items-center gap-1">
-                              <button onclick="openEditTaskModal('${escapeHtml(task.id)}')" class="p-1 text-slate-500 hover:text-indigo-600" title="แก้ไข">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                              <button onclick="openEditTaskModal('${escapeHtml(task.id)}')" class="p-1.5 text-slate-500 hover:text-indigo-600" title="แก้ไข">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
                               </button>
-                              <button onclick="confirmDeleteTask('${escapeHtml(task.id)}')" class="p-1 text-slate-400 hover:text-rose-600" title="ลบ">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                              <button onclick="confirmDeleteTask('${escapeHtml(task.id)}')" class="p-1.5 text-slate-400 hover:text-rose-600" title="ลบ">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
                               </button>
                             </div>
                           </div>
@@ -1297,7 +1364,6 @@ function renderAnalyticsCharts() {
   const categoryCanvas = document.getElementById('categoryBarChart');
   if (!statusCanvas || !categoryCanvas) return;
 
-  // 1. Doughnut Chart by Status
   const statusCounts = STATUSES.map(
     (st) => AppState.tasks.filter((t) => t.status === st).length
   );
@@ -1331,7 +1397,6 @@ function renderAnalyticsCharts() {
     }
   });
 
-  // 2. Bar Chart by Task Type
   const typeCounts = TASK_TYPES.map(
     (tp) => AppState.tasks.filter((t) => t.taskType === tp).length
   );
@@ -1369,6 +1434,7 @@ function renderAnalyticsCharts() {
 function renderAll() {
   if (!isBrowserEnv()) return;
 
+  renderAuthLockScreenState();
   renderConnectionBadge();
   renderKpiCards();
   renderPriorityFocusZone();
@@ -1379,7 +1445,6 @@ function renderAll() {
     countEl.textContent = `แสดง ${filteredTasks.length} จากทั้งหมด ${AppState.tasks.length} งาน`;
   }
 
-  // Toggle active view containers
   const tableWrapper = document.getElementById('tableViewContainer');
   const gridWrapper = document.getElementById('gridViewContainer');
   const kanbanWrapper = document.getElementById('kanbanViewContainer');
@@ -1388,7 +1453,6 @@ function renderAll() {
   if (gridWrapper) gridWrapper.classList.toggle('hidden', AppState.viewMode !== 'grid');
   if (kanbanWrapper) kanbanWrapper.classList.toggle('hidden', AppState.viewMode !== 'kanban');
 
-  // Update View Switcher button styles
   ['table', 'grid', 'kanban'].forEach((mode) => {
     const btn = document.getElementById(`viewBtn_${mode}`);
     if (!btn) return;
@@ -1420,13 +1484,12 @@ function renderAll() {
 
 /**
  * ============================================================================
- * INTERACTIVE ACTIONS, FILTERS & MODALS
+ * INTERACTIVE ACTIONS, MOBILE HELPERS, FILTERS & MODALS
  * ============================================================================
  */
 function populateDropdownsAndFilters() {
   if (!isBrowserEnv()) return;
 
-  // Filter bar dropdowns
   const filterType = document.getElementById('filterTaskType');
   const filterCat = document.getElementById('filterCategory');
   const filterPrio = document.getElementById('filterPriority');
@@ -1464,7 +1527,6 @@ function populateDropdownsAndFilters() {
       `</optgroup>`;
   }
 
-  // Modal form dropdowns
   const modalTaskType = document.getElementById('modalTaskType');
   const modalCategory = document.getElementById('modalCategory');
   const modalPriority = document.getElementById('modalPriority');
@@ -1512,6 +1574,42 @@ function filterModalCategoryDropdown(searchVal) {
   }
 }
 
+/**
+ * Mobile Quick-Tap Helpers for Priority & Due Date
+ */
+function selectModalPriorityPill(priorityVal) {
+  const prioSelect = document.getElementById('modalPriority');
+  if (prioSelect) prioSelect.value = priorityVal;
+  updateModalPriorityPillsUI();
+}
+
+function updateModalPriorityPillsUI() {
+  const prioSelect = document.getElementById('modalPriority');
+  const current = prioSelect ? prioSelect.value : 'ปกติ';
+  PRIORITIES.forEach((p) => {
+    const btn = document.getElementById(`prioPill_${p}`);
+    if (!btn) return;
+    if (p === current) {
+      if (p === 'ด่วนที่สุด') {
+        btn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-sm transition';
+      } else if (p === 'ด่วน') {
+        btn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-sm transition';
+      } else {
+        btn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm transition';
+      }
+    } else {
+      btn.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+    }
+  });
+}
+
+function setQuickDueDateOffset(offsetDays) {
+  const dueDateEl = document.getElementById('modalDueDate');
+  if (!dueDateEl) return;
+  dueDateEl.value = addDaysToDateStr(getTodayStr(), offsetDays);
+  updateModalRemainingDaysPreview();
+}
+
 function renderTargetPickerOptions(query) {
   const listEl = document.getElementById('targetComboboxList');
   if (!listEl) return;
@@ -1523,32 +1621,36 @@ function renderTargetPickerOptions(query) {
   let html = '';
 
   if (matchedOverview.length > 0) {
-    html += `<div class="px-2.5 py-1 text-[11px] font-bold text-slate-400 uppercase bg-slate-50">กลุ่มงาน / ภาพรวม สพม.พัทลุง</div>`;
+    html += `<div class="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase bg-slate-50 sticky top-0">กลุ่มงาน / ภาพรวม สพม.พัทลุง</div>`;
     matchedOverview.forEach((item) => {
       const isSelected = AppState.selectedTargetsInModal.includes(item);
       html += `
         <button type="button" onclick="toggleTargetSelection('${escapeHtml(item)}')"
-          class="w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-indigo-50 transition ${
-            isSelected ? 'bg-indigo-50/80 font-semibold text-indigo-700' : 'text-slate-700'
+          class="w-full text-left px-3.5 py-2.5 text-sm sm:text-xs flex items-center justify-between hover:bg-indigo-50 active:bg-indigo-100 transition ${
+            isSelected ? 'bg-indigo-50/90 font-semibold text-indigo-700' : 'text-slate-700'
           }">
-          <span>${escapeHtml(item)}</span>
-          ${isSelected ? '<span class="text-indigo-600 font-bold">✓</span>' : ''}
+          <span class="pr-2">${escapeHtml(item)}</span>
+          <span class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+            isSelected ? 'bg-indigo-600 text-white font-bold' : 'border border-slate-300 bg-white'
+          }">${isSelected ? '✓' : ''}</span>
         </button>
       `;
     });
   }
 
   if (matchedSchools.length > 0) {
-    html += `<div class="px-2.5 py-1 text-[11px] font-bold text-slate-400 uppercase bg-slate-50 border-t border-slate-100">โรงเรียนในสังกัด 27 โรงเรียน</div>`;
+    html += `<div class="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase bg-slate-50 border-t border-slate-100 sticky top-0">โรงเรียนในสังกัด 27 โรงเรียน</div>`;
     matchedSchools.forEach((item) => {
       const isSelected = AppState.selectedTargetsInModal.includes(item);
       html += `
         <button type="button" onclick="toggleTargetSelection('${escapeHtml(item)}')"
-          class="w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-indigo-50 transition ${
-            isSelected ? 'bg-indigo-50/80 font-semibold text-indigo-700' : 'text-slate-700'
+          class="w-full text-left px-3.5 py-2.5 text-sm sm:text-xs flex items-center justify-between hover:bg-indigo-50 active:bg-indigo-100 transition ${
+            isSelected ? 'bg-indigo-50/90 font-semibold text-indigo-700' : 'text-slate-700'
           }">
-          <span>${escapeHtml(item)}</span>
-          ${isSelected ? '<span class="text-indigo-600 font-bold">✓</span>' : ''}
+          <span class="pr-2">${escapeHtml(item)}</span>
+          <span class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+            isSelected ? 'bg-indigo-600 text-white font-bold' : 'border border-slate-300 bg-white'
+          }">${isSelected ? '✓' : ''}</span>
         </button>
       `;
     });
@@ -1557,13 +1659,13 @@ function renderTargetPickerOptions(query) {
   if (q && !ALL_TARGET_OPTIONS.some((opt) => opt.toLowerCase() === q)) {
     html += `
       <button type="button" onclick="addCustomTargetFromSearch()"
-        class="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 border-t border-indigo-100">
+        class="w-full text-left px-3.5 py-3 text-sm sm:text-xs font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 border-t border-indigo-100">
         + เพิ่ม "${escapeHtml(query.trim())}" เป็นกลุ่มเป้าหมายเพิ่มเติม
       </button>
     `;
   }
 
-  listEl.innerHTML = html || `<div class="p-3 text-xs text-slate-400 text-center">ไม่พบรายการที่ค้นหา</div>`;
+  listEl.innerHTML = html || `<div class="p-4 text-xs text-slate-400 text-center">ไม่พบรายการที่ค้นหา</div>`;
 }
 
 function renderSelectedTargetTagsInModal() {
@@ -1571,16 +1673,16 @@ function renderSelectedTargetTagsInModal() {
   if (!container) return;
 
   if (AppState.selectedTargetsInModal.length === 0) {
-    container.innerHTML = `<span class="text-xs text-slate-400 italic">ยังไม่ได้เลือกกลุ่มงานหรือโรงเรียน (คลิกเลือกจากรายการด้านล่าง)</span>`;
+    container.innerHTML = `<span class="text-xs text-slate-400 italic">ยังไม่ได้เลือกกลุ่มงานหรือโรงเรียน (แตะเลือกจากรายการด้านล่าง)</span>`;
     return;
   }
 
   container.innerHTML = AppState.selectedTargetsInModal
     .map(
       (item) => `
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
         ${escapeHtml(item)}
-        <button type="button" onclick="removeTargetSelection('${escapeHtml(item)}')" class="hover:text-rose-600 font-bold leading-none">&times;</button>
+        <button type="button" onclick="removeTargetSelection('${escapeHtml(item)}')" class="ml-0.5 w-4 h-4 rounded-full bg-indigo-200/70 hover:bg-rose-200 hover:text-rose-700 flex items-center justify-center font-bold leading-none">&times;</button>
       </span>
     `
     )
@@ -1621,6 +1723,11 @@ function addCustomTargetFromSearch() {
 function selectQuickTargetPreset(presetType) {
   if (presetType === 'ALL_SCHOOLS') {
     const label = 'ทุกโรงเรียนในสังกัด (27 โรงเรียน)';
+    if (!AppState.selectedTargetsInModal.includes(label)) {
+      AppState.selectedTargetsInModal.push(label);
+    }
+  } else if (presetType === 'SESAO_OFFICE') {
+    const label = 'สพม.พัทลุง (ภาพรวมสำนักงานเขตฯ)';
     if (!AppState.selectedTargetsInModal.includes(label)) {
       AppState.selectedTargetsInModal.push(label);
     }
@@ -1665,6 +1772,7 @@ function openAddTaskModal() {
   filterModalCategoryDropdown('');
   document.getElementById('modalCategory').value = CATEGORIES[0];
   document.getElementById('modalPriority').value = 'ปกติ';
+  updateModalPriorityPillsUI();
   document.getElementById('modalTitle').value = '';
   document.getElementById('modalDetails').value = '';
   document.getElementById('modalStartDate').value = today;
@@ -1699,6 +1807,7 @@ function openEditTaskModal(taskId) {
   filterModalCategoryDropdown('');
   document.getElementById('modalCategory').value = task.category || CATEGORIES[0];
   document.getElementById('modalPriority').value = task.priority || 'ปกติ';
+  updateModalPriorityPillsUI();
   document.getElementById('modalTitle').value = task.title || '';
   document.getElementById('modalDetails').value = task.details || '';
   document.getElementById('modalStartDate').value = task.startDate || getTodayStr();
@@ -1774,7 +1883,6 @@ async function handleSaveTaskForm(event) {
   closeTaskModal();
   renderAll();
 
-  // Sync to GAS if URL is configured
   if (AppState.config.gasWebAppUrl) {
     await postToGasBackend({
       action: isEditing ? 'updateTask' : 'createTask',
@@ -1878,12 +1986,16 @@ async function postToGasBackend(payloadObj) {
   if (!url) return { success: false, offline: true };
 
   try {
+    const bodyWithPin = {
+      ...payloadObj,
+      pin: AppState.config.adminPin || DEFAULT_ADMIN_PIN
+    };
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain;charset=utf-8'
       },
-      body: JSON.stringify(payloadObj)
+      body: JSON.stringify(bodyWithPin)
     });
     const result = await response.json();
     return result;
@@ -1893,14 +2005,16 @@ async function postToGasBackend(payloadObj) {
   }
 }
 
-async function syncWithGasBackend() {
+async function syncWithGasBackend(silent = false) {
+  if (!AppState.isAuthenticated) return;
+
   const url = (AppState.config.gasWebAppUrl || '').trim();
   if (!url) {
-    if (typeof Swal !== 'undefined') {
+    if (!silent && typeof Swal !== 'undefined') {
       Swal.fire({
         icon: 'info',
-        title: 'โหมดใช้งานในเครื่อง (Local Demo Cache)',
-        html: 'ขณะนี้ข้อมูลถูกบันทึกในเบราว์เซอร์เรียบร้อยแล้ว<br><span class="text-xs text-slate-500">หากต้องการซิงค์ขึ้น Google Sheets จริง กรุณาคลิกปุ่ม <b>"ตั้งค่าระบบ"</b> เพื่อวาง Web App URL ของ Google Apps Script</span>',
+        title: 'โหมดบันทึกในเครื่อง',
+        html: 'ขณะนี้ข้อมูลถูกบันทึกในเบราว์เซอร์เรียบร้อยแล้ว',
         confirmButtonColor: '#4F46E5'
       });
     }
@@ -1909,7 +2023,7 @@ async function syncWithGasBackend() {
   }
 
   try {
-    if (typeof Swal !== 'undefined') {
+    if (!silent && typeof Swal !== 'undefined') {
       Swal.fire({
         title: 'กำลังซิงค์ข้อมูลกับ Google Sheets...',
         allowOutsideClick: false,
@@ -1917,39 +2031,44 @@ async function syncWithGasBackend() {
       });
     }
 
-    const res = await fetch(`${url}?action=getAll&t=${Date.now()}`);
+    const pinParam = encodeURIComponent(AppState.config.adminPin || DEFAULT_ADMIN_PIN);
+    const res = await fetch(`${url}?action=getAll&pin=${pinParam}&t=${Date.now()}`);
     const data = await res.json();
 
     if (data && data.success) {
-      if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+      // Always respect the exact array from Google Sheets (even when empty `[]`!)
+      if (Array.isArray(data.tasks)) {
         AppState.tasks = data.tasks.map((t) => ({
           ...t,
           remainingDays: calculateRemainingDays(t.dueDate)
         }));
         saveTasksToStorage();
-      } else if (AppState.tasks.length > 0) {
-        // Push local tasks to initialize empty sheet
-        await postToGasBackend({
-          action: 'syncAllTasks',
-          tasks: AppState.tasks
-        });
+      }
+      if (data.config) {
+        if (data.config.telegramBotToken) {
+          AppState.config.telegramBotToken = data.config.telegramBotToken;
+        }
+        if (data.config.telegramChatId) {
+          AppState.config.telegramChatId = data.config.telegramChatId;
+        }
+        saveConfigToStorage();
       }
 
       renderAll();
-      if (typeof Swal !== 'undefined') {
+      if (!silent && typeof Swal !== 'undefined') {
         Swal.fire({
           icon: 'success',
           title: 'ซิงค์ข้อมูลสำเร็จ!',
-          text: `อัปเดตข้อมูลล่าสุด ${AppState.tasks.length} รายการกับ Google Sheets เรียบร้อยแล้ว`,
-          timer: 2000,
+          text: `ข้อมูลปัจจุบันในฐานข้อมูล: ${AppState.tasks.length} รายการ`,
+          timer: 1800,
           showConfirmButton: false
         });
       }
-    } else {
+    } else if (!silent) {
       throw new Error((data && data.error) || 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้');
     }
   } catch (err) {
-    if (typeof Swal !== 'undefined') {
+    if (!silent && typeof Swal !== 'undefined') {
       Swal.fire({
         icon: 'error',
         title: 'ซิงค์ข้อมูลไม่สำเร็จ',
@@ -1957,6 +2076,66 @@ async function syncWithGasBackend() {
         confirmButtonColor: '#4F46E5'
       });
     }
+  }
+}
+
+async function handleClearAllDatabase() {
+  if (typeof Swal !== 'undefined') {
+    const res = await Swal.fire({
+      icon: 'warning',
+      title: 'ยืนยันการล้างฐานข้อมูลทั้งหมด?',
+      html: 'รายการงานทั้งหมดในหน้าเว็บและใน Google Sheets จะถูกลบออกจนว่างเปล่า (0 รายการ) เพื่อให้คุณเริ่มคีย์ข้อมูลจริงใหม่',
+      showCancelButton: true,
+      confirmButtonColor: '#E11D48',
+      cancelButtonColor: '#64748B',
+      confirmButtonText: 'ยืนยัน ล้างข้อมูลทั้งหมด',
+      cancelButtonText: 'ยกเลิก'
+    });
+    if (!res.isConfirmed) return;
+  }
+
+  AppState.tasks = [];
+  saveTasksToStorage();
+  closeSettingsModal();
+  renderAll();
+
+  if (AppState.config.gasWebAppUrl) {
+    await postToGasBackend({
+      action: 'clearAllTasks'
+    });
+  }
+
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      icon: 'success',
+      title: 'ล้างฐานข้อมูลเรียบร้อยแล้ว (0 รายการ)',
+      text: 'พร้อมสำหรับการเริ่มคีย์ข้อมูลภารกิจจริงของคุณแล้วค่ะ',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+}
+
+async function loadSampleTasksManual() {
+  AppState.tasks = getInitialMockTasks();
+  saveTasksToStorage();
+  closeSettingsModal();
+  renderAll();
+  if (AppState.config.gasWebAppUrl) {
+    await postToGasBackend({
+      action: 'syncAllTasks',
+      tasks: AppState.tasks
+    });
+  }
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'โหลดข้อมูลตัวอย่าง 3 รายการเรียบร้อยแล้ว',
+      showConfirmButton: false,
+      timer: 2000
+    });
   }
 }
 
@@ -1995,7 +2174,6 @@ async function handleTestTelegramAlert() {
       });
     }
 
-    // Send directly via Telegram API or via GAS backend
     const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2039,6 +2217,7 @@ async function handleTestTelegramAlert() {
  */
 function openSettingsModal() {
   document.getElementById('settingGasUrl').value = AppState.config.gasWebAppUrl || '';
+  document.getElementById('settingAdminPin').value = AppState.config.adminPin || DEFAULT_ADMIN_PIN;
   document.getElementById('settingTelegramToken').value = AppState.config.telegramBotToken || '';
   document.getElementById('settingTelegramChatId').value = AppState.config.telegramChatId || '';
 
@@ -2056,11 +2235,14 @@ function closeSettingsModal() {
 async function handleSaveSettings(event) {
   if (event) event.preventDefault();
 
+  const newPin = document.getElementById('settingAdminPin').value.trim() || DEFAULT_ADMIN_PIN;
   AppState.config.gasWebAppUrl = document.getElementById('settingGasUrl').value.trim();
+  AppState.config.adminPin = newPin;
   AppState.config.telegramBotToken = document.getElementById('settingTelegramToken').value.trim();
   AppState.config.telegramChatId = document.getElementById('settingTelegramChatId').value.trim();
 
   saveConfigToStorage();
+  saveAuthSessionToStorage(newPin, AppState.config.sessionDurationDays || DEFAULT_SESSION_DAYS);
   closeSettingsModal();
   renderAll();
 
@@ -2068,6 +2250,7 @@ async function handleSaveSettings(event) {
     await postToGasBackend({
       action: 'saveConfig',
       config: {
+        adminPin: newPin,
         telegramBotToken: AppState.config.telegramBotToken,
         telegramChatId: AppState.config.telegramChatId,
         morningAlertTime: '07:30'
@@ -2079,26 +2262,9 @@ async function handleSaveSettings(event) {
     Swal.fire({
       icon: 'success',
       title: 'บันทึกการตั้งค่าระบบสำเร็จ',
-      text: 'จำค่าการเชื่อมต่อไว้ในระบบเรียบร้อยแล้ว',
+      text: 'จำค่าการเชื่อมต่อและรหัส PIN ไว้ในระบบเรียบร้อยแล้ว',
       timer: 1800,
       showConfirmButton: false
-    });
-  }
-}
-
-function resetDemoMockData() {
-  AppState.tasks = getInitialMockTasks();
-  saveTasksToStorage();
-  closeSettingsModal();
-  renderAll();
-  if (typeof Swal !== 'undefined') {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: 'รีเซ็ตข้อมูลตัวอย่าง สพม.พัทลุง เรียบร้อยแล้ว',
-      showConfirmButton: false,
-      timer: 2000
     });
   }
 }
@@ -2241,7 +2407,6 @@ function initApp() {
   loadStateFromStorage();
   populateDropdownsAndFilters();
 
-  // Bind filter change listeners
   const searchEl = document.getElementById('searchInput');
   if (searchEl) {
     searchEl.addEventListener('input', (e) => {
@@ -2266,7 +2431,6 @@ function initApp() {
   bindSelect('filterStatus', 'status');
   bindSelect('filterTargetGroup', 'targetGroup');
 
-  // Restore analytics open state
   const analyticsBody = document.getElementById('analyticsCollapsibleBody');
   if (analyticsBody) {
     analyticsBody.classList.toggle('hidden', !AppState.analyticsOpen);
@@ -2274,21 +2438,9 @@ function initApp() {
 
   renderAll();
 
-  // Auto-sync silently with Google Sheets in the background if connected
-  if (AppState.config.gasWebAppUrl) {
-    fetch(`${AppState.config.gasWebAppUrl}?action=getAll&t=${Date.now()}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.success && Array.isArray(data.tasks) && data.tasks.length > 0) {
-          AppState.tasks = data.tasks.map((t) => ({
-            ...t,
-            remainingDays: calculateRemainingDays(t.dueDate)
-          }));
-          saveTasksToStorage();
-          renderAll();
-        }
-      })
-      .catch((err) => console.warn('Background initial sync note:', err));
+  // Only sync automatically if session is already authenticated
+  if (AppState.isAuthenticated && AppState.config.gasWebAppUrl) {
+    syncWithGasBackend(true);
   }
 }
 
@@ -2306,14 +2458,17 @@ if (typeof module !== 'undefined' && module.exports) {
     TARGET_GROUPS_OVERVIEW,
     TARGET_SCHOOLS,
     ALL_TARGET_OPTIONS,
+    DEFAULT_ADMIN_PIN,
+    DEFAULT_SESSION_DAYS,
     getTodayStr,
     addDaysToDateStr,
     calculateRemainingDays,
     getRemainingDaysBadgeInfo,
     generateTaskId,
     getInitialMockTasks,
+    createAuthSessionPayload,
+    isAuthSessionValid,
     buildClientTelegramDigestPreview,
     runBuiltInSelfTest
   };
 }
-
