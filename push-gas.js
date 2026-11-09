@@ -97,11 +97,11 @@ async function pushToAppsScript() {
       });
       if (depsRes.ok) {
         const depsData = await depsRes.json();
-        const prodDep = (depsData.deployments || []).find(
+        const versionedDeps = (depsData.deployments || []).filter(
           (d) => d.deploymentConfig && d.deploymentConfig.versionNumber
         );
-        if (prodDep) {
-          await fetch(
+        for (const prodDep of versionedDeps) {
+          const putDepRes = await fetch(
             `https://script.googleapis.com/v1/projects/${scriptId}/deployments/${prodDep.deploymentId}`,
             {
               method: 'PUT',
@@ -119,7 +119,9 @@ async function pushToAppsScript() {
               })
             }
           );
-          console.log(`🚀 อัปเดต Web App Deployment เป็นเวอร์ชัน ${verData.versionNumber} อัตโนมัติสำเร็จ!`);
+          if (putDepRes.ok) {
+            console.log(`🚀 อัปเดต Web App Deployment (${prodDep.deploymentId.slice(0, 16)}...) เป็นเวอร์ชัน ${verData.versionNumber} สำเร็จ!`);
+          }
         }
       }
     }
