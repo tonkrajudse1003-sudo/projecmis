@@ -35,7 +35,7 @@ echo [3/3] Pushing to Remote Git Repository...
 echo ======================================================================
 git push
 if exist ".clasp.json" (
-  echo Found .clasp.json - Pushing backend files to Google Apps Script via clasp...
-  call npx @google/clasp push
+  echo Found .clasp.json - Pushing backend files to Google Apps Script...
+  node push-gas.js
 )
 echo Done!

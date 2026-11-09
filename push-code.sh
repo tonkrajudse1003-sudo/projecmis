@@ -23,8 +23,8 @@ echo "======================================================================"
 git push
 
 if [ -f ".clasp.json" ]; then
-  echo "Found .clasp.json - Pushing backend files to Google Apps Script via clasp..."
-  npx @google/clasp push
+  echo "Found .clasp.json - Pushing backend files to Google Apps Script..."
+  node push-gas.js
 fi
 
 echo "Done!"
