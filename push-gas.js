@@ -79,6 +79,54 @@ async function pushToAppsScript() {
 
   const data = JSON.parse(resText);
   console.log(`✅ อัปโหลดขึ้น Google Apps Script สำเร็จ! (${data.files.map((f) => f.name).join(', ')})`);
+
+  // Also create a new version and update active Web App deployment automatically so /exec URL stays live with latest code
+  try {
+    const verRes = await fetch(`https://script.googleapis.com/v1/projects/${scriptId}/versions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ description: 'Auto-updated via push-gas.js' })
+    });
+    if (verRes.ok) {
+      const verData = await verRes.json();
+      const depsRes = await fetch(`https://script.googleapis.com/v1/projects/${scriptId}/deployments`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (depsRes.ok) {
+        const depsData = await depsRes.json();
+        const prodDep = (depsData.deployments || []).find(
+          (d) => d.deploymentConfig && d.deploymentConfig.versionNumber
+        );
+        if (prodDep) {
+          await fetch(
+            `https://script.googleapis.com/v1/projects/${scriptId}/deployments/${prodDep.deploymentId}`,
+            {
+              method: 'PUT',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                deploymentConfig: {
+                  scriptId,
+                  versionNumber: verData.versionNumber,
+                  manifestFileName: 'appsscript',
+                  description: 'Auto-updated via push-gas.js'
+                }
+              })
+            }
+          );
+          console.log(`🚀 อัปเดต Web App Deployment เป็นเวอร์ชัน ${verData.versionNumber} อัตโนมัติสำเร็จ!`);
+        }
+      }
+    }
+  } catch (depErr) {
+    console.warn('หมายเหตุการอัปเดตเวอร์ชัน:', depErr.message);
+  }
+
   console.log(`🔗 เปิดดูสคริปต์ได้ที่: https://script.google.com/d/${scriptId}/edit`);
 }
 

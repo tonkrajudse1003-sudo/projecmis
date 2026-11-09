@@ -767,8 +767,28 @@ async function handleVerifyPinLogin(event) {
     return;
   }
 
-  const expectedPin = String(AppState.config.adminPin || DEFAULT_ADMIN_PIN).trim();
-  if (enteredPin !== expectedPin) {
+  const expectedLocalPin = String(AppState.config.adminPin || DEFAULT_ADMIN_PIN).trim();
+  let isPinValid = enteredPin === expectedLocalPin;
+
+  // Verify against Google Sheets Config as source of truth so PIN changes sync across devices
+  if (AppState.config.gasWebAppUrl) {
+    try {
+      const verifyUrl = `${AppState.config.gasWebAppUrl}?action=verifyPin&pin=${encodeURIComponent(enteredPin)}&t=${Date.now()}`;
+      const res = await fetch(verifyUrl);
+      const data = await res.json();
+      if (data && typeof data.authenticated === 'boolean') {
+        isPinValid = data.authenticated;
+        if (isPinValid) {
+          AppState.config.adminPin = enteredPin;
+        }
+      }
+    } catch (err) {
+      // Fallback to local PIN if offline
+      console.warn('Offline PIN check fallback:', err);
+    }
+  }
+
+  if (!isPinValid) {
     if (errEl) {
       errEl.textContent = 'รหัส PIN ไม่ถูกต้อง กรุณาลองอีกครั้ง';
       errEl.classList.remove('hidden');
@@ -1981,14 +2001,14 @@ async function confirmDeleteTask(taskId) {
  * GOOGLE APPS SCRIPT & TELEGRAM API INTEGRATION
  * ============================================================================
  */
-async function postToGasBackend(payloadObj) {
+async function postToGasBackend(payloadObj, overridePin) {
   const url = (AppState.config.gasWebAppUrl || '').trim();
   if (!url) return { success: false, offline: true };
 
   try {
     const bodyWithPin = {
       ...payloadObj,
-      pin: AppState.config.adminPin || DEFAULT_ADMIN_PIN
+      pin: overridePin || payloadObj.pin || AppState.config.adminPin || DEFAULT_ADMIN_PIN
     };
     const response = await fetch(url, {
       method: 'POST',
@@ -2235,6 +2255,7 @@ function closeSettingsModal() {
 async function handleSaveSettings(event) {
   if (event) event.preventDefault();
 
+  const previousPin = AppState.config.adminPin || DEFAULT_ADMIN_PIN;
   const newPin = document.getElementById('settingAdminPin').value.trim() || DEFAULT_ADMIN_PIN;
   AppState.config.gasWebAppUrl = document.getElementById('settingGasUrl').value.trim();
   AppState.config.adminPin = newPin;
@@ -2247,24 +2268,122 @@ async function handleSaveSettings(event) {
   renderAll();
 
   if (AppState.config.gasWebAppUrl) {
-    await postToGasBackend({
-      action: 'saveConfig',
-      config: {
-        adminPin: newPin,
-        telegramBotToken: AppState.config.telegramBotToken,
-        telegramChatId: AppState.config.telegramChatId,
-        morningAlertTime: '07:30'
-      }
-    });
+    // Authenticate using previousPin so Google Sheets allows updating adminPin to newPin
+    await postToGasBackend(
+      {
+        action: 'saveConfig',
+        config: {
+          adminPin: newPin,
+          telegramBotToken: AppState.config.telegramBotToken,
+          telegramChatId: AppState.config.telegramChatId,
+          morningAlertTime: '07:30'
+        }
+      },
+      previousPin
+    );
   }
 
   if (typeof Swal !== 'undefined') {
     Swal.fire({
       icon: 'success',
       title: 'บันทึกการตั้งค่าระบบสำเร็จ',
-      text: 'จำค่าการเชื่อมต่อและรหัส PIN ไว้ในระบบเรียบร้อยแล้ว',
-      timer: 1800,
+      text: `อัปเดตรหัส PIN (${newPin}) และการเชื่อมต่อลงฐานข้อมูลเรียบร้อยแล้ว`,
+      timer: 2000,
       showConfirmButton: false
+    });
+  }
+}
+
+function openChangePinModal() {
+  const oldEl = document.getElementById('changePinOldInput');
+  const newEl = document.getElementById('changePinNewInput');
+  const confirmEl = document.getElementById('changePinConfirmInput');
+  const errEl = document.getElementById('changePinErrorMsg');
+  if (oldEl) oldEl.value = '';
+  if (newEl) newEl.value = '';
+  if (confirmEl) confirmEl.value = '';
+  if (errEl) errEl.classList.add('hidden');
+
+  const modal = document.getElementById('changePinModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closeChangePinModal() {
+  const modal = document.getElementById('changePinModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+async function handleChangePinSubmit(event) {
+  if (event) event.preventDefault();
+  const oldPin = (document.getElementById('changePinOldInput').value || '').trim();
+  const newPin = (document.getElementById('changePinNewInput').value || '').trim();
+  const confirmPin = (document.getElementById('changePinConfirmInput').value || '').trim();
+  const errEl = document.getElementById('changePinErrorMsg');
+
+  const showErr = (msg) => {
+    if (errEl) {
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    }
+  };
+
+  if (!oldPin || !newPin) {
+    showErr('กรุณากรอกรหัส PIN เดิมและรหัส PIN ใหม่ให้ครบถ้วน');
+    return;
+  }
+  if (newPin.length < 4) {
+    showErr('กรุณาตั้งรหัส PIN ใหม่อย่างน้อย 4 หลัก');
+    return;
+  }
+  if (newPin !== confirmPin) {
+    showErr('รหัส PIN ใหม่และการยืนยันรหัสไม่ตรงกัน');
+    return;
+  }
+
+  // Verify oldPin locally or via GAS
+  let oldPinValid = oldPin === String(AppState.config.adminPin || DEFAULT_ADMIN_PIN).trim();
+
+  if (AppState.config.gasWebAppUrl) {
+    const res = await postToGasBackend(
+      {
+        action: 'changePin',
+        oldPin,
+        newPin
+      },
+      oldPin
+    );
+    if (res && res.success) {
+      oldPinValid = true;
+    } else if (res && res.error) {
+      showErr(res.error);
+      return;
+    }
+  }
+
+  if (!oldPinValid) {
+    showErr('รหัส PIN เดิมไม่ถูกต้อง');
+    return;
+  }
+
+  AppState.config.adminPin = newPin;
+  saveConfigToStorage();
+  saveAuthSessionToStorage(newPin, AppState.config.sessionDurationDays || DEFAULT_SESSION_DAYS);
+  closeChangePinModal();
+  renderAuthLockScreenState();
+  renderAll();
+
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      icon: 'success',
+      title: 'เปลี่ยนรหัส PIN ใหม่สำเร็จ!',
+      text: 'บันทึกรหัส PIN ใหม่ลงในระบบและ Google Sheets เรียบร้อยแล้วค่ะ',
+      confirmButtonColor: '#4F46E5'
     });
   }
 }

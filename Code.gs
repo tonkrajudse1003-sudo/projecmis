@@ -283,6 +283,28 @@ function doPost(e) {
       });
     }
 
+    if (action === 'changePin') {
+      const oldPin = payload.oldPin || suppliedPin;
+      const newPin = String(payload.newPin || '').trim();
+      if (!verifyAdminPin(oldPin, config)) {
+        return createJsonResponse({
+          success: false,
+          error: 'รหัส PIN เดิมไม่ถูกต้อง'
+        });
+      }
+      if (!newPin || newPin.length < 4) {
+        return createJsonResponse({
+          success: false,
+          error: 'กรุณาตั้งรหัส PIN ใหม่อย่างน้อย 4 หลัก'
+        });
+      }
+      saveConfigToSheet({ adminPin: newPin });
+      return createJsonResponse({
+        success: true,
+        message: 'เปลี่ยนรหัส PIN สำเร็จเรียบร้อยแล้ว'
+      });
+    }
+
     if (!verifyAdminPin(suppliedPin, config)) {
       return createJsonResponse({
         success: false,
